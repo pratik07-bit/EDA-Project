@@ -289,9 +289,10 @@ def generate_data(seed=42):
 
 def clean_data(df):
     df_clean = df.copy()
-    num_cols = ['Study_Hours_Per_Day','Attendance_%','Sleep_Hours','Previous_Score']
+    # Only fill numeric columns that actually exist in the dataframe
+    num_cols = df_clean.select_dtypes(include='number').columns.tolist()
     for col in num_cols:
-        df_clean[col].fillna(df_clean[col].median(), inplace=True)
+        df_clean[col] = df_clean[col].fillna(df_clean[col].median())
     return df_clean
 
 
@@ -461,17 +462,15 @@ with tab2:
             st.info("✅ No missing values found in dataset.")
 
     st.markdown("""<div class="section-header"><h3>✅ Cleaning Strategy Applied</h3></div>""", unsafe_allow_html=True)
-    clean_cols = ['Study_Hours_Per_Day','Attendance_%','Sleep_Hours','Previous_Score']
-    for col in clean_cols:
-        if col in raw_df.columns:
-            n_miss = raw_df[col].isna().sum()
-            med    = raw_df[col].median()
-            if n_miss > 0:
-                st.markdown(f"""
-                <div class="insight-card">
-                    <span class="label">Median Imputation</span><br>
-                    <span class="text">🔧 <b style='color:#64ffda'>{col}</b> — {n_miss} missing values filled with median <b style='color:#ffb347'>{med:.2f}</b></span>
-                </div>""", unsafe_allow_html=True)
+    for col in raw_df.select_dtypes(include='number').columns:
+        n_miss = raw_df[col].isna().sum()
+        med    = raw_df[col].median()
+        if n_miss > 0:
+            st.markdown(f"""
+            <div class="insight-card">
+                <span class="label">Median Imputation</span><br>
+                <span class="text">🔧 <b style='color:#64ffda'>{col}</b> — {n_miss} missing values filled with median <b style='color:#ffb347'>{med:.2f}</b></span>
+            </div>""", unsafe_allow_html=True)
 
     after_missing = df_clean.isnull().sum().sum()
     st.success(f"✅ After cleaning: **{after_missing} missing values** remain.")
